@@ -1,0 +1,89 @@
+This document specifies the communication protocol used between STM32 and Bluetooth module (HC-06).
+
+Message Structure (bitfield)
+
+		Byte 1	   Byte 2    Byte 3
+|--------------||--------||--------|
+ XX  XX  XX  XX  XXXXXXXX  XXXXXXXX
+|__||__||__||__||__________________|
+ S1  S2  S3  S4          S5           
+
+
+
+Segment 1: Message type
+	0x0 - Heartbeat
+	0x1 - Reply
+	0x2 - Command
+	0x3 - Debug
+
+Segment 2: Message sender
+	0x0 - App
+	0x1 - MCU
+                             _______________________________
+Segment 3: Response answer									|
+	0x1 - Failure											|
+	0x2 - OK												|							Segment 3+4: State
+	0x3 - N/A												|								0x0 - Init
+															| On heartbeat message			0x1 - Standby
+Segment 4: Command type										|--------------------->  		0x2 - Config
+	0x0 - Reflow											|								0x3 - Reflow
+	0x1 - Set parameter										|								0x4 - Error
+	0x2 - N/A												|
+							________________________________|
+Segment 5: 16-bit data
+
+
+
+Message types:
+	Heartbeat (MCU -> Front-End App)
+		S1 = 0x0 (Heartbeat)
+		S2 = 0x1 (MCU)
+		S3 = 0x3 (N/A)
+		S4 = 0x2 (N/A)
+		S5 = __
+		S6 = Temperature data (bit 16-3) + status (bit 1-2)
+			Temperature data (in format returned from MAX31855)
+			Status bit: 
+				0x0 - Thermocouple connected + System OK
+				0x1 - Thermocouple disconnected + System OK
+				0x2 - System Error
+				0x3 - System Error + thermocouple disconnected
+				
+				** If status bit is not 0x0, the temperature data will be replaced with an error code
+				Error codes:
+					bit 3: MAX31855 Thermocouple Short to VCC
+					bit 4: MAX31855 Thermocouple Short to GND
+					bit 5: MAX31855 Thermocouple Open Circuit
+					bit 6: MAX31855 Unknown Error
+					bit 7: Communication timeout MAX31855
+					bit 8: Unknown system state
+					bit 9: PID Parameters not stored
+					bit 10: Flash program error
+					bit 11: Flash write error
+				
+				
+		Example: | 00011110 | 00000001 | 10010000 (Temperature 25C, system OK, thermocouple connected)
+		
+	Command to start reflow (Front-End App -> MCU)
+		S1 = 0x2 (Command)
+		S2 = 0x0 (App)
+		S3 = 0x3 (N/A)
+		S4 = 0x0 (Reflow)
+		S5 = 0x0 (Start reflow)
+		
+	Command to stop reflow (Front-end App -> MCU)
+		S1 = 0x2 (command)
+		S2 = 0x0 (App)
+		S3 = 0x3 (N/A)
+		S4 = 0x0 (Reflow)
+		S5 = 0x1 (Stop reflow)
+		
+		Example: | 10001100 | 00000000 | 00000000
+		
+	Response to start reflow (MCU -> Front-End App)
+		S1 = 0x1 (Reply)
+		S2 = 
+		
+	Command to reset error (Front-End App -> MCU)
+	
+	

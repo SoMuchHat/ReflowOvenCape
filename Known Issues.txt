@@ -1,0 +1,7 @@
+Rev 1
+* GND on board does not connect to either of the pin headers (CN7 or CN10) and therefore doesn't share a ground with STM32 nucleo
+* Pin headers for MISO, CS, SCK are too close to each other and therefore can't all fit together side by side (RX and TX on the other hand is perfect distance apart)
+* 5V to MAX31855 when it's max power supply is 3v3!
+* Wrong pinout for MAX31855
+* CN12 on STM32 Nucleo physically interferes with thermocouple connector
+* Button pins set incorrectly in EAGLE. Button is always "closed"
